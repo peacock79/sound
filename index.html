@@ -12,22 +12,7 @@ canvas{width:100%;background:#050912;border-radius:8px;display:block}
 .hide{display:none!important}.mu{color:var(--mu);font-size:.85rem}input[type=range]{width:100%}
 #rs{position:fixed;inset:0;background:#000b;display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto}#rs .cd{max-width:520px;width:100%;margin:auto}
 h3{margin:.2em 0 .4em}
-#sp{position:fixed;inset:0;z-index:9;background:radial-gradient(circle at 50% 45%,#12305a,#0b1220 70%);display:flex;align-items:center;justify-content:center;transition:opacity .7s;overflow:hidden}
-#sp.out{opacity:0;pointer-events:none}
-#sp canvas{position:absolute;inset:0;width:100%;height:100%;background:none;border-radius:0}
-#sp .t{position:relative;text-align:center;animation:pop 1.2s .3s both}
-#sp .ic{font-size:4.2rem;animation:sw 2.2s ease-in-out infinite}
-#sp h2{font-size:2.3rem;margin:.1em 0;text-shadow:0 0 22px #22d3ee,0 0 4px #22d3ee}
-#sp p{margin:0;color:#9fd8ee;animation:pop 1s 1.8s both}
-#sp .ld{position:absolute;bottom:14%;left:20%;right:20%;height:6px;background:#ffffff22;border-radius:6px;overflow:hidden}
-#sp .ld i{display:block;height:100%;background:linear-gradient(90deg,#22d3ee,#34d399);animation:fl 5.5s linear both}
-#sp .sk{position:absolute;bottom:7%;color:var(--mu);font-size:.8rem;animation:pop 1s 2.5s both}
-@keyframes pop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:none}}
-@keyframes sw{50%{transform:rotate(-14deg) scale(1.12)}}
-@keyframes fl{from{width:0}to{width:100%}}
-</style></head><body>
-<div id="sp"><canvas id="spc"></canvas><div class="t"><div class="ic">🔍</div><h2>สายสืบเสียงปริศนา</h2><p>Sound Wave &amp; Frequency Guess</p></div><div class="ld"><i></i></div><div class="sk">แตะเพื่อข้าม</div></div>
-<main>
+</style></head><body><main>
 <section id="menu"><h1>🎧 สายสืบเสียงปริศนา</h1><p class="mu">Sound Wave &amp; Frequency Guess — ใช้ความถี่ แอมพลิจูด และรูปคลื่นไขคดีเสียง ใช้หูฟังจะได้ผลดีที่สุด</p>
 <div class="cd">🏆 คะแนนสูงสุด: <span id="bs"></span></div>
 <div class="g"><button class="p" data-st="1">ด่าน 1 · เสียงวัตถุเดี่ยว</button><button class="p" data-st="2">ด่าน 2 · ความถี่ใกล้เคียง</button><button class="p" data-st="3">ด่าน 3 · เสียงซ้อนทับ (ต้องกรองเสียง)</button></div>
@@ -132,15 +117,5 @@ else if(t.id=='zm'){zoom=(zoom+1)%4;$('#zl').textContent=ZR[zoom][2];sx.clearRec
 else if(t.id=='db'){$('#rc').innerHTML=`<h3>📚 คลังเปรียบเทียบคลื่นเสียง</h3><p class="mu">กดฟังตัวอย่างเสียงมาตรฐานของแต่ละตัวเลือก (ไม่มีเสียงรบกวน) แล้วเทียบรูปคลื่น/สเปกโตรแกรมด้านบน</p><div class="g">${C.op.map(i=>`<button data-r="${i}" style="text-align:left">${S[i].e} ${S[i].n} <span class="mu">· ${S[i].hz}</span></button>`).join('')}</div><button id="cl" style="width:100%;margin-top:10px">ปิด</button>`;$('#rs').classList.remove('hide')}
 else if(d.r)play(d.r);else if(t.id=='cl')$('#rs').classList.add('hide')});
 $('#hp').oninput=$('#lp').oninput=setF;menu();
-(()=>{const sp=$('#sp'),c=$('#spc'),x=c.getContext('2d'),t0=performance.now();let done=0;
-const rs=()=>{c.width=innerWidth;c.height=innerHeight};rs();addEventListener('resize',rs);
-const end=()=>{if(done)return;done=1;sp.classList.add('out');setTimeout(()=>sp.remove(),800)};
-sp.onclick=end;setTimeout(end,5600);
-(function f(){if(done)return;requestAnimationFrame(f);const t=(performance.now()-t0)/1000,W=c.width,H=c.height;x.clearRect(0,0,W,H);
-for(let k=0;k<5;k++){x.beginPath();x.strokeStyle=`hsla(${180+k*30},90%,60%,${.3+k*.08})`;x.lineWidth=2;const a=Math.min(1,t/1.5);
-for(let i=0;i<=W;i+=6){const y=H*.78+Math.sin(i/(60+k*25)+t*(2+k*.6))*H*.09*a*Math.sin(i/W*Math.PI)*(1+k*.15);i?x.lineTo(i,y):x.moveTo(i,y)}x.stroke()}
-for(let k=0;k<4;k++){const p=(t*.45+k/4)%1;x.beginPath();x.arc(W/2,H*.5,p*Math.min(W,H)*.65,0,7);x.strokeStyle=`rgba(34,211,238,${(1-p)*.5})`;x.lineWidth=2;x.stroke()}
-for(let i=0;i<24;i++){const h=(Math.sin(t*3+i*.7)+1)*H*.03*Math.min(1,t/1.5)+3;x.fillStyle=`hsla(${170+i*5},90%,60%,.5)`;x.fillRect(W*.1+i*W*.8/24,H*.1,W*.02,h)}
-})()})();
 if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script></body></html>
