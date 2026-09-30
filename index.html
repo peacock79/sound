@@ -1,0 +1,121 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>สายสืบเสียงปริศนา</title><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#0b1220"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#0b1220;--cd:#131c31;--ac:#22d3ee;--ok:#34d399;--bad:#f87171;--tx:#e5eaf5;--mu:#8a96b3}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,"Noto Sans Thai",sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+main{max-width:560px;margin:auto;padding:14px}h1{font-size:1.5rem;margin:.3em 0}
+.cd{background:var(--cd);border-radius:14px;padding:14px;margin:10px 0;border:1px solid #223055}
+button{font:inherit;color:var(--tx);background:#1e2a47;border:1px solid #2c3a5e;border-radius:10px;padding:10px;cursor:pointer}
+button.p{background:var(--ac);color:#04222b;font-weight:700;border:0}button.s{outline:2px solid var(--ac);background:#173a52}button:disabled{opacity:.4}
+.g{display:grid;gap:8px}.c2{grid-template-columns:1fr 1fr}.c3{grid-template-columns:repeat(3,1fr)}
+canvas{width:100%;background:#050912;border-radius:8px;display:block}
+.bar{height:9px;background:#0007;border-radius:6px;overflow:hidden;margin:3px 0 8px}.bar i{display:block;height:100%;width:0;background:var(--ac)}
+.hide{display:none!important}.mu{color:var(--mu);font-size:.85rem}input[type=range]{width:100%}
+#rs{position:fixed;inset:0;background:#000b;display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto}#rs .cd{max-width:520px;width:100%;margin:auto}
+h3{margin:.2em 0 .4em}
+</style></head><body><main>
+<section id="menu"><h1>🎧 สายสืบเสียงปริศนา</h1><p class="mu">Sound Wave &amp; Frequency Guess — ใช้ความถี่ แอมพลิจูด และรูปคลื่นไขคดีเสียง ใช้หูฟังจะได้ผลดีที่สุด</p>
+<div class="cd">🏆 คะแนนสูงสุด: <span id="bs"></span></div>
+<div class="g"><button class="p" data-st="1">ด่าน 1 · เสียงวัตถุเดี่ยว</button><button class="p" data-st="2">ด่าน 2 · ความถี่ใกล้เคียง</button><button class="p" data-st="3">ด่าน 3 · เสียงซ้อนทับ (ต้องกรองเสียง)</button></div>
+<p class="mu">ตอบ 3 ส่วนต่อคดี: แหล่งกำเนิด (60) ย่านความถี่ (20) ความดัง (20)</p></section>
+<section id="play" class="hide">
+<div class="cd"><div class="mu" id="hd"></div><div id="br"></div></div>
+<div class="cd"><button class="p" id="pl" style="width:100%">▶ เล่นเสียงหลักฐาน</button>
+<p class="mu" style="margin:10px 0 4px">Waveform (รูปคลื่น)</p><canvas id="cw" width="600" height="120"></canvas>
+<p class="mu" style="margin:10px 0 4px">Spectrogram <span id="zl"></span></p><canvas id="cs" width="600" height="150"></canvas>
+<div style="margin-top:10px" class="mu">ทุ้ม 20–250 Hz<div class="bar"><i id="m0"></i></div>กลาง 250–4,000 Hz<div class="bar"><i id="m1"></i></div>แหลม 4,000 Hz+<div class="bar"><i id="m2"></i></div>แอมพลิจูด (ความดัง)<div class="bar"><i id="m3" style="background:#fbbf24"></i></div></div></div>
+<div class="cd"><h3>🔧 เครื่องมือ</h3><div class="g c3"><button id="sm">🐢 ช้า 0.5x</button><button id="zm">🔍 ซูมความถี่</button><button id="db">📚 คลังเทียบ</button></div>
+<p class="mu" style="margin:10px 0 0">High-Pass (ตัดเสียงทุ้ม): <b id="hv"></b></p><input type="range" id="hp" min="0" value="0">
+<p class="mu" style="margin:6px 0 0">Low-Pass (ตัดเสียงแหลม): <b id="lv"></b></p><input type="range" id="lp" min="0" max="100" value="100"><p class="mu hide" id="nzt">⚠ มีเสียงรบกวนแทรก! ดูว่าอยู่ย่านความถี่ไหนแล้วกรองออก</p></div>
+<div class="cd"><h3>📝 ส่งคำตัดสิน</h3><p class="mu">1) แหล่งกำเนิดเสียง</p><div class="g c2" id="op"></div>
+<p class="mu">2) ย่านความถี่หลัก</p><div class="g c3"><button data-b="L">ทุ้ม</button><button data-b="M">กลาง</button><button data-b="H">แหลม</button></div>
+<p class="mu">3) แอมพลิจูด</p><div class="g c2"><button data-a="D">ดัง</button><button data-a="S">เบา</button></div><button class="p" id="sub" style="width:100%;margin-top:12px" disabled>ส่งคำตอบ</button></div>
+<button id="bk">← กลับเมนู</button></section>
+<div id="rs" class="hide"><div class="cd" id="rc"></div></div></main>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],BN={L:'ทุ้ม',M:'กลาง',H:'แหลม'},AN={D:'ดัง',S:'เบา'};
+// L = layers: w wave|'n' noise, f/f2 freq, g gain, d hit len, r repeat, k decay, v/vd vibrato, a/ad AM, bp/q bandpass
+const S={
+glass:{n:'แก้วแตก',e:'🥂',hz:'3,000–8,000 Hz',b:'H',a:'D',x:'เศษแก้วกระทบกันสร้างคลื่นความถี่สูงมากและสั้น จึงแหลมกรอบ',L:[{w:'n',bp:5500,q:.6,g:.9,d:.6,r:9},{w:'sine',f:3300,g:.2,d:.2,r:.17,k:.85},{w:'sine',f:4700,g:.15,d:.15,r:.23,k:.8}]},
+can:{n:'กระป๋องตก',e:'🥫',hz:'300–1,500 Hz',b:'M',a:'D',x:'โลหะกลวงสั่นก้อง ได้ความถี่กลางและกระเด้งซ้ำโดยดังลดลงเรื่อยๆ',L:[{w:'square',f:320,f2:200,g:.3,d:.25,r:.45,k:.55},{w:'n',bp:1500,q:.8,g:.6,d:.1,r:.45,k:.55}]},
+mosq:{n:'ยุงบิน',e:'🦟',hz:'~600 Hz',b:'M',a:'S',x:'ปีกยุงพัดพือราว 600 ครั้ง/วินาที ได้เสียงความถี่ ~600 Hz ความยาวคลื่นสั้น และแอมพลิจูดต่ำ',L:[{w:'sawtooth',f:600,v:7,vd:25,g:.12}]},
+bee:{n:'ผึ้งบิน',e:'🐝',hz:'~240 Hz',b:'L',a:'S',x:'ปีกผึ้งสั่นราว 240 ครั้ง/วินาที ทุ้มกว่ายุงประมาณ 2.5 เท่า',L:[{w:'sawtooth',f:240,v:5,vd:8,g:.2},{w:'sawtooth',f:480,g:.05}]},
+alarm:{n:'นาฬิกาปลุก',e:'⏰',hz:'~1,000 Hz',b:'M',a:'D',x:'ออสซิลเลเตอร์ให้คลื่นสี่เหลี่ยมความถี่ ~1 kHz เป็นจังหวะปิ๊บๆ ที่มีฮาร์มอนิกเยอะ จึงแสบหู',L:[{w:'square',f:1000,g:.18,d:.1,r:.25}]},
+kettle:{n:'ไอน้ำกาต้มน้ำ',e:'♨️',hz:'4,000–9,000 Hz',b:'H',a:'S',x:'ไอพุ่งผ่านช่องแคบเกิดความปั่นป่วนแบบสุ่ม กลายเป็นนอยส์ความถี่สูงแผ่กว้าง',L:[{w:'n',bp:6500,q:.8,g:1.1},{w:'sine',f:4000,f2:4300,g:.04}]},
+thunder:{n:'ฟ้าผ่า',e:'⛈️',hz:'20–120 Hz',b:'L',a:'D',x:'การขยายตัวของอากาศอย่างรุนแรงให้คลื่นทุ้มความยาวคลื่นยาวหลายเมตร เดินทางไกลได้',L:[{w:'n',bp:70,q:.5,g:3},{w:'sine',f:45,f2:35,g:.5}]},
+boat:{n:'เครื่องยนต์เรือ',e:'🚤',hz:'40–120 Hz',b:'L',a:'D',x:'ลูกสูบจุดระเบิดเป็นจังหวะช้าๆ ให้เสียงตุบๆ ความถี่ต่ำ',L:[{w:'square',f:45,g:.3,d:.09,r:.14},{w:'sine',f:90,g:.3,d:.09,r:.14}]},
+steps:{n:'เสียงเดินหนักๆ',e:'👣',hz:'40–200 Hz',b:'L',a:'D',x:'ส้นเท้ากระแทกพื้นให้แรงกระแทกทุ้มต่ำ ห่างจังหวะสม่ำเสมอ',L:[{w:'sine',f:90,f2:40,g:.8,d:.2,r:.6},{w:'n',bp:200,q:.7,g:1.2,d:.08,r:.6}]},
+voice:{n:'เสียงพูดมนุษย์',e:'🗣️',hz:'ฟอร์แมนต์ 500–3,000 Hz',b:'M',a:'S',x:'สายเสียงสั่นได้ความถี่พื้นฐาน แล้วโพรงปากและคอเลือกขยายเป็นฟอร์แมนต์ในย่านกลาง',L:[{w:'sawtooth',f:130,v:3,vd:12,g:.5,bp:700,q:4},{w:'sawtooth',f:130,v:3,vd:12,g:.3,bp:1800,q:5}]},
+bird:{n:'นกร้อง',e:'🐦',hz:'2,500–4,000 Hz',b:'M',a:'S',x:'ซิริงซ์ของนกสร้างเสียงร้องไต่ระดับความถี่ขึ้นลงเร็วๆ ในย่านกลางค่อนสูง',L:[{w:'sine',f:2600,f2:3800,g:.2,d:.12,r:.25,k:.9}]},
+bell:{n:'กระดิ่ง',e:'🔔',hz:'4,000–7,000 Hz',b:'H',a:'S',x:'โลหะขนาดเล็กสั่นเร็วมาก ให้ความถี่สูงกังวานและค่อยๆ เบาลง',L:[{w:'sine',f:4200,g:.25,d:1.6,r:1.7},{w:'sine',f:6300,g:.1,d:1,r:1.7}]},
+purr:{n:'แมวคราง',e:'🐱',hz:'~25–100 Hz',b:'L',a:'S',x:'กล่องเสียงสั่นราว 25 ครั้ง/วินาที ให้เสียงครางทุ้มต่ำและเบา',L:[{w:'triangle',f:55,a:25,ad:1,g:.5},{w:'n',bp:120,q:1,g:.5,a:25,ad:1}]},
+knock:{n:'เคาะประตู',e:'🚪',hz:'100–300 Hz',b:'L',a:'D',x:'ไม้แผ่นใหญ่สั่นสะเทือนแรง ได้เสียงทุ้มก้องและหมดเร็ว',L:[{w:'sine',f:200,f2:110,g:.7,d:.12,r:.22},{w:'n',bp:300,q:.8,g:.9,d:.05,r:.22}]},
+tick:{n:'นาฬิกาเดิน',e:'🕰️',hz:'2,000–4,000 Hz',b:'M',a:'S',x:'เฟืองกระทบกันสั้นมาก ได้เสียงติ๊กแหลมคมย่านกลางค่อนสูง แอมพลิจูดต่ำ',L:[{w:'n',bp:3000,q:2,g:.9,d:.03,r:.5}]},
+phone:{n:'มือถือสั่น',e:'📳',hz:'150–200 Hz',b:'L',a:'S',x:'มอเตอร์ถ่วงสั่นราว 170 รอบ/วินาที เป็นจังหวะเป็นช่วงๆ',L:[{w:'sawtooth',f:170,a:9,ad:1,g:.3}]},
+siren:{n:'ไซเรน',e:'🚨',hz:'500–1,300 Hz',b:'M',a:'D',x:'ความถี่ไล่ขึ้นลงเป็นวงจร ดึงความสนใจได้ดีและดังไกล',L:[{w:'sawtooth',f:900,v:.8,vd:350,g:.18}]},
+fridge:{n:'ตู้เย็นหึ่งๆ',e:'🧊',hz:'50–150 Hz',b:'L',a:'S',x:'คอมเพรสเซอร์สั่นตามความถี่ไฟบ้าน (50/60 Hz) และฮาร์มอนิกของมัน',L:[{w:'sine',f:60,g:.5},{w:'sine',f:120,g:.25},{w:'n',bp:200,q:.7,g:.2}]},
+drip:{n:'น้ำหยด',e:'💧',hz:'600–1,400 Hz',b:'M',a:'S',x:'ฟองอากาศใต้น้ำสั่นแล้วความถี่ตกลง ได้เสียงตึ๊บลอยๆ',L:[{w:'sine',f:1400,f2:600,g:.4,d:.12,r:.7}]},
+sizzle:{n:'เสียงทอดน้ำมัน',e:'🍳',hz:'3,000–8,000 Hz',b:'H',a:'S',x:'ฟองไอน้ำแตกนับไม่ถ้วนรวมเป็นนอยส์ความถี่สูง',L:[{w:'n',bp:5000,q:.3,g:.8,a:55,ad:.9}]},
+cricket:{n:'จิ้งหรีด',e:'🦗',hz:'~4,800 Hz',b:'H',a:'S',x:'ปีกสีกันเป็นจังหวะรัวราว 14 ครั้ง/วินาที ให้เสียงแหลมสูงมาก',L:[{w:'sine',f:4800,g:.15,a:14,ad:1}]},
+blender:{n:'เครื่องปั่น',e:'🌪️',hz:'300–2,000 Hz',b:'M',a:'D',x:'มอเตอร์หมุนเร็วผสมเสียงใบมีดตีน้ำแข็ง ได้ทั้งโทนและนอยส์ในย่านกลาง',L:[{w:'sawtooth',f:320,v:2,vd:20,g:.2},{w:'n',bp:1200,q:.5,g:.6}]}};
+const N={rain:[{w:'n',bp:7000,q:.5,g:1}],rumble:[{w:'n',bp:120,q:.5,g:3}]};
+const K=[ // stage,place,brief,answer,options,noise
+[1,'ห้องครัว','เที่ยงคืน มีบางอย่างตกพื้นแล้วมีเสียงกรอบแกรบ!','glass',['glass','can','alarm','kettle']],
+[1,'ห้องครัว','มีเสียงโลหะกลวงกระเด้งไปมาบนพื้น ใครทำอะไรตก?','can',['can','glass','tick','bee']],
+[1,'สวนสาธารณะ','เช้าตรู่ ได้ยินเสียงร้องเป็นจังหวะสั้นๆ จากต้นไม้','bird',['bird','thunder','steps','fridge']],
+[1,'ข้างถนน','เสียงหวีดหวืออยู่ไกลๆ ค่อยๆ ดังขึ้น','siren',['siren','purr','bell','boat']],
+[1,'โรงงาน','เสียงมอเตอร์หมุนเร็ว ผสมเสียงกระทบ','blender',['blender','boat','purr','bell']],
+[1,'ห้องครัว','มีเสียงฟู่ยาวๆ ออกมาจากเตา','kettle',['kettle','fridge','thunder','tick']],
+[2,'สวนดอกไม้','เสียงหึ่งๆ ใกล้หู ทุ้มและหนักแน่น','bee',['bee','mosq','fridge','purr']],
+[2,'ห้องนอน','เสียงบางเบาวนรอบหูตอนกลางคืน','mosq',['mosq','bee','phone','drip']],
+[2,'ห้องนอน','เสียงปลุกเป็นจังหวะ ปิ๊บ ปิ๊บ','alarm',['alarm','siren','bell','bird']],
+[2,'ริมคลอง','เสียงทุ้มกระหึ่มลึกมาจากระยะไกล','thunder',['thunder','boat','steps','knock']],
+[2,'หน้าบ้าน','มีใครมาที่ประตู ทุ้มเป็นจังหวะ','knock',['knock','steps','phone','purr']],
+[2,'ห้องครัว','เสียงซ่าแหลมๆ จากกระทะ','sizzle',['sizzle','drip','tick','cricket']],
+[3,'ใต้ชายคา (ฝนตก)','เสียงฝนดังซ่า! แต่ยังมีเสียงหนักๆ เป็นจังหวะอยู่ท่ามกลางฝน','steps',['steps','knock','boat','thunder'],'rain'],
+[3,'ทุ่งนา (ฝนตก)','ฝนกระหน่ำ แต่ได้ยินเสียงหึ่งๆ อยู่ข้างหู','bee',['bee','mosq','fridge','boat'],'rain'],
+[3,'ท่าเรือ (ฝนตก)','ฝนตก แล้วมีเสียงตุบๆ ต่อเนื่องจากท่าน้ำ','boat',['boat','steps','fridge','knock'],'rain'],
+[3,'ริมถนน (รถติด)','เสียงรถครืนๆ กลบ แต่มีเสียงแหลมระรัวอยู่ในพุ่มไม้','cricket',['cricket','kettle','bell','mosq'],'rumble'],
+[3,'ร้านกาแฟ (รถติด)','เสียงถนนครืนๆ แต่มีเสียงกังวานสั้นๆ ตอนเปิดประตู','bell',['bell','cricket','alarm','sizzle'],'rumble'],
+[3,'ชานบ้าน (ฝนตก)','ฝนซ่าๆ แต่มีคนพูดคุยกันอยู่','voice',['voice','siren','alarm','knock'],'rain']];
+let AC,NB,mix,hp,lp,an,cur,speed=1,zoom=0,G,C,P,fd,td;
+const ZR=[[20,20000,'20–20k Hz'],[20,500,'ซูมทุ้ม 20–500 Hz'],[250,4000,'ซูมกลาง 250–4k Hz'],[3000,20000,'ซูมแหลม 3k–20k Hz']];
+const m=(v,a,b)=>a*Math.pow(b/a,v/100);
+function init(){if(AC)return;AC=new(window.AudioContext||webkitAudioContext)();NB=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+mix=AC.createGain();mix.gain.value=.7;hp=AC.createBiquadFilter();hp.type='highpass';lp=AC.createBiquadFilter();lp.type='lowpass';an=AC.createAnalyser();an.fftSize=2048;an.smoothingTimeConstant=.5;mix.connect(hp);hp.connect(lp);lp.connect(an);an.connect(AC.destination);fd=new Uint8Array(an.frequencyBinCount);td=new Uint8Array(an.fftSize);setF()}
+function setF(){const h=m(+$('#hp').value,20,8000),l=m(+$('#lp').value,200,20000);if(hp){hp.frequency.value=h;lp.frequency.value=l}$('#hv').textContent=Math.round(h)+' Hz';$('#lv').textContent=Math.round(l)+' Hz'}
+function layer(x,t0,s,T,dst){const c=AC,r=x.r?x.r/s:0,d=(x.d||T)/s,n=r?Math.floor(T/r)+1:1;
+for(let i=0;i<n;i++){const st=t0+i*r,dur=r?d:T,g=(x.g||.3)*Math.pow(x.k||1,i)*(x.a?.5:1);let src;
+if(x.w==='n'){src=c.createBufferSource();src.buffer=NB;src.loop=true}else{src=c.createOscillator();src.type=x.w;src.frequency.setValueAtTime(x.f*s,st);if(x.f2)src.frequency.exponentialRampToValueAtTime(x.f2*s,st+dur)}
+let o=src;if(x.bp){const b=c.createBiquadFilter();b.type='bandpass';b.frequency.value=x.bp*s;b.Q.value=x.q||1;src.connect(b);o=b}
+const G=c.createGain();G.gain.setValueAtTime(0,st);if(r){G.gain.linearRampToValueAtTime(g,st+.004);G.gain.exponentialRampToValueAtTime(.0008,st+dur)}else{G.gain.linearRampToValueAtTime(g,st+.15);G.gain.setValueAtTime(g,st+dur-.2);G.gain.linearRampToValueAtTime(0,st+dur)}
+o.connect(G);G.connect(dst);src.start(st);src.stop(st+dur+.05);
+const lf=(hz,dep,tg)=>{const l=c.createOscillator(),lg=c.createGain();l.frequency.value=hz*s;lg.gain.value=dep;l.connect(lg);lg.connect(tg);l.start(st);l.stop(st+dur+.05)};
+if(x.v)lf(x.v,x.vd*s,src.frequency);if(x.a&&!r)lf(x.a,g*x.ad,G.gain)}}
+function play(id,nz){init();AC.resume();if(cur)cur.disconnect();cur=AC.createGain();cur.connect(mix);const s=speed,T=3.2/s,t=AC.currentTime+.05;S[id].L.forEach(x=>layer(x,t,s,T,cur));if(nz)N[nz].forEach(x=>layer(x,t,s,T,cur))}
+const cw=$('#cw').getContext('2d'),cs=$('#cs'),sx=cs.getContext('2d');
+function draw(){requestAnimationFrame(draw);if(!an||$('#play').classList.contains('hide'))return;an.getByteTimeDomainData(td);an.getByteFrequencyData(fd);
+const W=600,H=120;cw.fillStyle='#050912';cw.fillRect(0,0,W,H);cw.strokeStyle='#22d3ee';cw.lineWidth=1.5;cw.beginPath();for(let i=0;i<1024;i++){const x=i/1023*W,y=td[i]/255*H;i?cw.lineTo(x,y):cw.moveTo(x,y)}cw.stroke();
+const[fa,fb]=ZR[zoom],hz=AC.sampleRate/2;sx.drawImage(cs,-2,0);for(let y=0;y<150;y++){const f=fa*Math.pow(fb/fa,1-y/150),v=fd[Math.min(1023,Math.round(f/hz*1024))]/255;sx.fillStyle=`hsl(${260-v*260},100%,${v*60}%)`;sx.fillRect(598,y,2,1)}
+const bw=hz/1024,av=(a,b)=>{let s=0,n=0;for(let i=Math.floor(a/bw);i<Math.min(1024,b/bw);i++){s+=fd[i];n++}return n?s/n/255:0};
+[av(20,250),av(250,4000),av(4000,22000)].forEach((v,i)=>$('#m'+i).style.width=Math.min(100,v*160)+'%');let q=0;for(let i=0;i<td.length;i++)q+=((td[i]-128)/128)**2;$('#m3').style.width=Math.min(100,Math.sqrt(q/td.length)*250)+'%'}
+draw();
+const sh=a=>a.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(v=>v[1]);
+const best=()=>{try{return JSON.parse(localStorage.sd||'{}')}catch(e){return{}}};
+function menu(){$('#menu').classList.remove('hide');$('#play').classList.add('hide');const b=best();$('#bs').textContent=[1,2,3].map(i=>`ด่าน ${i}: ${b[i]||0}`).join(' · ')}
+function start(st){G={st,cs:K.filter(k=>k[0]==st),i:0,sc:0};$('#menu').classList.add('hide');$('#play').classList.remove('hide');load()}
+function load(){const k=G.cs[G.i];C={pl:k[1],br:k[2],id:k[3],op:k[4],nz:k[5]};P={};speed=1;zoom=0;$('#sm').textContent='🐢 ช้า 0.5x';$('#sm').classList.remove('s');$('#hd').textContent=`ด่าน ${G.st} · คดี ${G.i+1}/${G.cs.length} · 🏆 ${G.sc}`;$('#br').innerHTML=`<b>📍 ${C.pl}</b><br>${C.br}`;$('#nzt').classList.toggle('hide',!C.nz);
+$('#op').innerHTML=sh(C.op).map(i=>`<button data-o="${i}">${S[i].e} ${S[i].n}</button>`).join('');$$('[data-b],[data-a]').forEach(b=>b.classList.remove('s'));$('#hp').value=0;$('#lp').value=100;$('#hp').max=100;setF();$('#zl').textContent=ZR[0][2];$('#sub').disabled=true;window.scrollTo(0,0)}
+function sel(k,v,e){P[k]=v;$$(`[data-${k}]`).forEach(b=>b.classList.toggle('s',b.dataset[k]===v));$('#sub').disabled=!(P.o&&P.b&&P.a)}
+function submit(){const s=S[C.id],so=P.o==C.id?60:0,sb=P.b==s.b?20:0,sa=P.a==s.a?20:0,t=so+sb+sa;G.sc+=t;
+$('#rc').innerHTML=`<h3>${so?'✅ ไขคดีสำเร็จ!':'❌ ตัวการคือ '+s.e+' '+s.n}</h3><p><b>+${t}</b> คะแนน (แหล่งกำเนิด ${so}/60 · ความถี่ ${sb}/20 · ความดัง ${sa}/20)</p><p>${s.e} <b>${s.n}</b><br>ความถี่: ${s.hz} → ย่าน<b>${BN[s.b]}</b> · แอมพลิจูด<b>${AN[s.a]}</b>${sb?'':`<br><span class="mu">คุณตอบย่านความถี่: ${BN[P.b]}</span>`}${sa?'':`<br><span class="mu">คุณตอบความดัง: ${AN[P.a]}</span>`}</p><p>🔬 ${s.x}</p><button class="p" id="nx" style="width:100%">${G.i+1<G.cs.length?'คดีต่อไป →':'สรุปผล'}</button>`;$('#rs').classList.remove('hide')}
+function next(){$('#rs').classList.add('hide');if(G.i+1<G.cs.length){G.i++;load()}else{const b=best();b[G.st]=Math.max(b[G.st]||0,G.sc);try{localStorage.sd=JSON.stringify(b)}catch(e){}const p=G.sc/(G.cs.length*100),st=p>.85?'⭐⭐⭐':p>.6?'⭐⭐':'⭐';$('#rc').innerHTML=`<h3>จบด่าน ${G.st}</h3><p style="font-size:1.4rem">${st}<br>${G.sc} / ${G.cs.length*100}</p><button class="p" id="mn" style="width:100%">กลับเมนู</button>`;$('#rs').classList.remove('hide')}}
+document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;const d=t.dataset;
+if(d.st)start(d.st);else if(d.o)sel('o',d.o);else if(d.b)sel('b',d.b);else if(d.a)sel('a',d.a);
+else if(t.id=='pl')play(C.id,C.nz);else if(t.id=='sub')submit();else if(t.id=='nx')next();else if(t.id=='mn'){$('#rs').classList.add('hide');menu()}else if(t.id=='bk')menu();
+else if(t.id=='sm'){speed=speed==1?.5:1;t.classList.toggle('s',speed<1);t.textContent=speed<1?'🐢 ช้า 0.5x ✓':'🐢 ช้า 0.5x'}
+else if(t.id=='zm'){zoom=(zoom+1)%4;$('#zl').textContent=ZR[zoom][2];sx.clearRect(0,0,600,150)}
+else if(t.id=='db'){$('#rc').innerHTML=`<h3>📚 คลังเปรียบเทียบคลื่นเสียง</h3><p class="mu">กดฟังตัวอย่างเสียงมาตรฐานของแต่ละตัวเลือก (ไม่มีเสียงรบกวน) แล้วเทียบรูปคลื่น/สเปกโตรแกรมด้านบน</p><div class="g">${C.op.map(i=>`<button data-r="${i}" style="text-align:left">${S[i].e} ${S[i].n} <span class="mu">· ${S[i].hz}</span></button>`).join('')}</div><button id="cl" style="width:100%;margin-top:10px">ปิด</button>`;$('#rs').classList.remove('hide')}
+else if(d.r)play(d.r);else if(t.id=='cl')$('#rs').classList.add('hide')});
+$('#hp').oninput=$('#lp').oninput=setF;menu();
+if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script></body></html>
